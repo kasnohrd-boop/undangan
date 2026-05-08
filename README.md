@@ -69,14 +69,16 @@
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .col-alamat { max-width: 200px; }
         
-        #debug-screen { display: none; background: #000; color: #0f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; font-family: monospace; font-size: 14px; border: 2px solid red; max-height: 200px; overflow-y: auto; }
+        /* CSS untuk Error Config */
+        #config-error { display: none; background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; border: 2px solid #f5c6cb; }
     </style>
 </head>
 <body>
 
-    <div id="debug-screen">
-        <b>System Log:</b><br>
-        <span id="log-text">Memulai sistem...</span>
+    <!-- PERINGATAN JIKA CONFIG SALAM -->
+    <div id="config-error">
+        ERROR: Kode Firebase (firebaseConfig) Anda belum diganti! <br>
+        Silakan ikuti panduan setting Firebase agar tombol bisa berfungsi.
     </div>
 
     <div class="header">
@@ -121,23 +123,6 @@
     <div class="print-area" id="printArea"></div>
 
     <script>
-        function addLog(msg, isError = false) {
-            const debugScreen = document.getElementById('debug-screen');
-            const logText = document.getElementById('log-text');
-            debugScreen.style.display = 'block';
-            logText.innerHTML += `<br>-> ${msg}`;
-            if(isError) debugScreen.style.border = "2px solid red";
-        }
-
-        window.onerror = function(msg, url, lineNo, columnNo, error) {
-            addLog("FATAL ERROR: " + msg, true);
-            return false;
-        };
-
-        // ==========================================
-        // KONFIGURASI FIREBASE 
-        // PASTIKAN TANDA KUTIP (" ") TIDAK ADA YANG TERHAPUS SAAT ANDA PASTE
-        // ==========================================
         const firebaseConfig = {
             apiKey: "AIzaSyD5CACtHvSFw2ouyDp-ryK2D1F7yig3lJQ",
             authDomain: "cetak-undangan-c9405.firebaseapp.com",
@@ -148,55 +133,41 @@
             appId: "1:14788781852:web:722ff23fb5096e826cfcd9"
         };
 
-        let db;
-        let dataNama = [];
+        // VALIDATOR: Cek apakah user sudah ganti config atau belum
+        if (firebaseConfig.apiKey.includes("XXXXXXX") || firebaseConfig.databaseURL.includes("project-anda")) {
+            document.getElementById('config-error').style.display = 'block';
+            // Matikan semua tombol agar user sadar harus setting Firebase dulu
+            document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+        } else {
+            // Jika config sudah diganti, jalankan Firebase
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const db = firebase.database();
+        let dataNama = []; 
 
-        try {
-            addLog("Mengecek Firebase Config...");
-            
-            // Cek aman tanpa .includes()
-            if (firebaseConfig.apiKey === "ISI_DENGAN_APIKEY_ANDA" || firebaseConfig.databaseURL === "ISI_DENGAN_DATABASEURL_ANDA") {
-                addLog("ERROR: Kode Firebase belum dimasukkan! Silakan ganti teks ISI_DENGAN... dengan kode asli dari Firebase Anda.", true);
-            } else {
-                addLog("Menghubungkan ke Firebase...");
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.database();
-                addLog("Firebase Terhubung!");
-
-                db.ref('tamu').on('value', (snapshot) => {
-                    addLog("Mengambil data dari cloud...");
-                    const data = snapshot.val();
-                    dataNama = [];
-                    if (data) {
-                        Object.keys(data).forEach(key => {
-                            const item = data[key];
-                            item.id = key; 
-                            dataNama.push(item);
-                        });
-                    }
-                    renderTable();
-                }, (error) => {
-                    addLog("FIREBASE REJECTED: " + error.message + " (Cek Firebase Rules Anda!)", true);
+        // LOAD DATA REAL-TIME
+        db.ref('tamu').on('value', (snapshot) => {
+            const data = snapshot.val();
+            dataNama = [];
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const item = data[key];
+                    item.id = key; 
+                    dataNama.push(item);
                 });
             }
-        } catch (e) {
-            addLog("TRY-CATCH ERROR: " + e.message, true);
-        }
+            renderTable();
+        });
 
+        // FUNGSI TAMBAH NAMA
         function tambahNama() {
-            addLog("Tombol Simpan Ditekan!");
             const panggilan = document.getElementById('inputPanggilan').value;
             const nama = document.getElementById('inputNama').value.trim();
             const alamat = document.getElementById('inputAlamat').value.trim();
 
             if (nama === '') {
                 tampilkanAlert('Nama tidak boleh kosong!', 'danger');
-                return;
-            }
-
-            if (!db) {
-                addLog("Gagal simpan: Database tidak terhubung.", true);
-                tampilkanAlert('Gagal menyimpan! Database belum terhubung.', 'danger');
                 return;
             }
 
@@ -208,13 +179,13 @@
                 document.getElementById('inputNama').value = '';
                 document.getElementById('inputAlamat').value = '';
                 tampilkanAlert('Nama berhasil ditambahkan!', 'success');
-                addLog("Data berhasil disimpan ke Cloud.");
             }).catch((error) => {
-                addLog("Gagal simpan ke Firebase: " + error.message, true);
-                tampilkanAlert('Gagal menyimpan! Cek layar log error.', 'danger');
+                console.error("Error simpan:", error);
+                tampilkanAlert('Gagal menyimpan! Cek Firebase Rules Anda.', 'danger');
             });
         }
 
+        // FUNGSI HAPUS
         function hapusNama(id) {
             if(confirm('Hapus nama ini?')) {
                 db.ref('tamu/' + id).remove();
@@ -227,6 +198,7 @@
             }
         }
 
+        // FUNGSI RENDER TABEL
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             const emptyState = document.getElementById('emptyState');
@@ -265,6 +237,7 @@
             setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
         }
 
+        // FUNGSI IMPORT EXCEL
         function importExcel(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -308,8 +281,8 @@
             tampilkanAlert('File Excel berhasil di-download!', 'success');
         }
 
+        // FUNGSI PRINT
         function prepareAndPrint() {
-            addLog("Tombol Cetak Ditekan!");
             if (dataNama.length === 0) { 
                 tampilkanAlert('Tidak ada nama untuk dicetak!', 'danger'); 
                 return; 
@@ -335,7 +308,6 @@
                 });
                 printArea.appendChild(printGrid);
             }
-            addLog("Membuka dialog print...");
             setTimeout(() => { window.print(); }, 500);
         }
 
