@@ -123,12 +123,15 @@
     <div class="print-area" id="printArea"></div>
 
     <script>
-        // ==========================================
-        // KONFIGURASI FIREBASE 
-        // ==========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyCzXeGmf12d_LYT3CVPFh6nSOBLqQ2N8b4",
-            authDomain: "cetak-undangan-c9405.firebaseapp.com",
+       // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCzXeGmf12d_LYT3CVPFh6nSOBLqQ2N8b4",
+  authDomain: "cetak-undangan-c9405.firebaseapp.com",
   projectId: "cetak-undangan-c9405",
   storageBucket: "cetak-undangan-c9405.firebasestorage.app",
   messagingSenderId: "14788781852",
