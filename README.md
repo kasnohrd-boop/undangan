@@ -141,7 +141,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyD5CACtHvSFw2ouyDp-ryK2D1F7yig3lJQ",
   authDomain: "cetak-undangan-4f659.firebaseapp.com",
   projectId: "cetak-undangan-4f659",
-  databaseURL: "https://console.firebase.google.com/u/0/project/cetak-undangan-c9405/database/cetak-undangan-c9405-default-rtdb/data/~2F",
+  databaseURL: "https://console.firebase.google.com/u/0/project/cetak-undangan-c9405",
   storageBucket: "cetak-undangan-4f659.firebasestorage.app",
   messagingSenderId: "599828746287",
   appId: "1:599828746287:web:bdad8e86dc3ba834fa76da"
