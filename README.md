@@ -69,13 +69,11 @@
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .col-alamat { max-width: 200px; }
         
-        /* CSS untuk Error Diagnostic */
         #debug-screen { display: none; background: #000; color: #0f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; font-family: monospace; font-size: 14px; border: 2px solid red; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-    <!-- LAYAR DIAGNOSTIC ERROR -->
     <div id="debug-screen">
         <b>System Log:</b><br>
         <span id="log-text">Memulai sistem...</span>
@@ -123,33 +121,31 @@
     <div class="print-area" id="printArea"></div>
 
     <script>
-        // FUNGSI TAMPILAN LOG ERROR (AGAR KITA TAU ERRORNYA APA)
         function addLog(msg, isError = false) {
             const debugScreen = document.getElementById('debug-screen');
             const logText = document.getElementById('log-text');
-            debugScreen.style.display = 'block'; // Tampilkan layar hitam
+            debugScreen.style.display = 'block';
             logText.innerHTML += `<br>-> ${msg}`;
             if(isError) debugScreen.style.border = "2px solid red";
         }
 
-        // Tangkap error JavaScript yang tersembunyi
         window.onerror = function(msg, url, lineNo, columnNo, error) {
-            addLog("FATAL ERROR DI BARIS " + lineNo + ": " + msg, true);
+            addLog("FATAL ERROR: " + msg, true);
             return false;
         };
 
         // ==========================================
-        // KONFIGURASI FIREBASE (GANTI DENGAN KODE ASLI ANDA)
+        // KONFIGURASI FIREBASE 
+        // PASTIKAN TANDA KUTIP (" ") TIDAK ADA YANG TERHAPUS SAAT ANDA PASTE
         // ==========================================
-       const firebaseConfig = {
-  apiKey: "AIzaSyB1a2b3c4d5e6f",           // 
-  authDomain: "undangan.firebaseapp.com",  // 
-  databaseURL: "https://undangan-default-rtdb.firebaseio.com", //
-  projectId: "undangan",                   // 
-  storageBucket: "undangan.appspot.com",   // 
-  messagingSenderId: "123456789",          // 
-  appId: "1:123456789:web:abc123"          // 
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyD5CACtHvSFw2ouyDp-ryK2D1F7yig3lJQ",
+            authDomain: "cetak-undangan-c9405.firebaseapp.com",
+            databaseURL: "https://console.firebase.google.com/u/0/project/cetak-undangan-c9405/database/cetak-undangan-c9405-default-rtdb/data/~2F",
+            projectId: "cetak-undangan-c9405",
+            storageBucket: "cetak-undangan-c9405.firebasestorage.app",
+            messagingSenderId: "14788781852",
+            appId: "1:14788781852:web:722ff23fb5096e826cfcd9"
         };
 
         let db;
@@ -157,16 +153,16 @@
 
         try {
             addLog("Mengecek Firebase Config...");
-            if (firebaseConfig.apiKey.includes("XXXXXXX") || firebaseConfig.databaseURL.includes("project-anda")) {
-                addLog("ERROR: Kode Firebase Belum Diganti! Tombol dimatikan.", true);
-                document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+            
+            // Cek aman tanpa .includes()
+            if (firebaseConfig.apiKey === "ISI_DENGAN_APIKEY_ANDA" || firebaseConfig.databaseURL === "ISI_DENGAN_DATABASEURL_ANDA") {
+                addLog("ERROR: Kode Firebase belum dimasukkan! Silakan ganti teks ISI_DENGAN... dengan kode asli dari Firebase Anda.", true);
             } else {
                 addLog("Menghubungkan ke Firebase...");
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.database();
                 addLog("Firebase Terhubung!");
 
-                // LOAD DATA REAL-TIME
                 db.ref('tamu').on('value', (snapshot) => {
                     addLog("Mengambil data dari cloud...");
                     const data = snapshot.val();
@@ -187,7 +183,6 @@
             addLog("TRY-CATCH ERROR: " + e.message, true);
         }
 
-        // FUNGSI TAMBAH NAMA
         function tambahNama() {
             addLog("Tombol Simpan Ditekan!");
             const panggilan = document.getElementById('inputPanggilan').value;
@@ -201,6 +196,7 @@
 
             if (!db) {
                 addLog("Gagal simpan: Database tidak terhubung.", true);
+                tampilkanAlert('Gagal menyimpan! Database belum terhubung.', 'danger');
                 return;
             }
 
@@ -219,7 +215,6 @@
             });
         }
 
-        // FUNGSI HAPUS
         function hapusNama(id) {
             if(confirm('Hapus nama ini?')) {
                 db.ref('tamu/' + id).remove();
@@ -232,7 +227,6 @@
             }
         }
 
-        // FUNGSI RENDER TABEL
         function renderTable() {
             const tbody = document.getElementById('tableBody');
             const emptyState = document.getElementById('emptyState');
@@ -271,7 +265,6 @@
             setTimeout(() => { alertBox.style.display = 'none'; }, 5000);
         }
 
-        // FUNGSI IMPORT EXCEL
         function importExcel(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -315,7 +308,6 @@
             tampilkanAlert('File Excel berhasil di-download!', 'success');
         }
 
-        // FUNGSI PRINT
         function prepareAndPrint() {
             addLog("Tombol Cetak Ditekan!");
             if (dataNama.length === 0) { 
