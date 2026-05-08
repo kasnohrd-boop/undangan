@@ -69,16 +69,16 @@
         .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .col-alamat { max-width: 200px; }
         
-        /* CSS untuk Error Config */
-        #config-error { display: none; background: #f8d7da; color: #721c24; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 20px; font-weight: bold; border: 2px solid #f5c6cb; }
+        /* CSS untuk Error Diagnostic */
+        #debug-screen { display: none; background: #000; color: #0f0; padding: 20px; border-radius: 10px; margin-bottom: 20px; font-family: monospace; font-size: 14px; border: 2px solid red; max-height: 200px; overflow-y: auto; }
     </style>
 </head>
 <body>
 
-    <!-- PERINGATAN JIKA CONFIG SALAM -->
-    <div id="config-error">
-        ERROR: Kode Firebase (firebaseConfig) Anda belum diganti! <br>
-        Silakan ikuti panduan setting Firebase agar tombol bisa berfungsi.
+    <!-- LAYAR DIAGNOSTIC ERROR -->
+    <div id="debug-screen">
+        <b>System Log:</b><br>
+        <span id="log-text">Memulai sistem...</span>
     </div>
 
     <div class="header">
@@ -123,7 +123,21 @@
     <div class="print-area" id="printArea"></div>
 
     <script>
-        const firebaseConfig = {
+        // FUNGSI TAMPILAN LOG ERROR (AGAR KITA TAU ERRORNYA APA)
+        function addLog(msg, isError = false) {
+            const debugScreen = document.getElementById('debug-screen');
+            const logText = document.getElementById('log-text');
+            debugScreen.style.display = 'block'; // Tampilkan layar hitam
+            logText.innerHTML += `<br>-> ${msg}`;
+            if(isError) debugScreen.style.border = "2px solid red";
+        }
+
+        // Tangkap error JavaScript yang tersembunyi
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            addLog("FATAL ERROR DI BARIS " + lineNo + ": " + msg, true);
+            return false;
+        };
+const firebaseConfig = {
             apiKey: "AIzaSyD5CACtHvSFw2ouyDp-ryK2D1F7yig3lJQ",
             authDomain: "cetak-undangan-c9405.firebaseapp.com",
             databaseURL: "https://console.firebase.google.com/u/0/project/cetak-undangan-c9405/database/cetak-undangan-c9405-default-rtdb/data/~2F",
@@ -133,41 +147,55 @@
             appId: "1:14788781852:web:722ff23fb5096e826cfcd9"
         };
 
-        // VALIDATOR: Cek apakah user sudah ganti config atau belum
-        if (firebaseConfig.apiKey.includes("XXXXXXX") || firebaseConfig.databaseURL.includes("project-anda")) {
-            document.getElementById('config-error').style.display = 'block';
-            // Matikan semua tombol agar user sadar harus setting Firebase dulu
-            document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
-        } else {
-            // Jika config sudah diganti, jalankan Firebase
-            firebase.initializeApp(firebaseConfig);
-        }
-        
-        const db = firebase.database();
-        let dataNama = []; 
+        let db;
+        let dataNama = [];
 
-        // LOAD DATA REAL-TIME
-        db.ref('tamu').on('value', (snapshot) => {
-            const data = snapshot.val();
-            dataNama = [];
-            if (data) {
-                Object.keys(data).forEach(key => {
-                    const item = data[key];
-                    item.id = key; 
-                    dataNama.push(item);
+        try {
+            addLog("Mengecek Firebase Config...");
+            if (firebaseConfig.apiKey.includes("XXXXXXX") || firebaseConfig.databaseURL.includes("project-anda")) {
+                addLog("ERROR: Kode Firebase Belum Diganti! Tombol dimatikan.", true);
+                document.querySelectorAll('.btn').forEach(btn => btn.disabled = true);
+            } else {
+                addLog("Menghubungkan ke Firebase...");
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.database();
+                addLog("Firebase Terhubung!");
+
+                // LOAD DATA REAL-TIME
+                db.ref('tamu').on('value', (snapshot) => {
+                    addLog("Mengambil data dari cloud...");
+                    const data = snapshot.val();
+                    dataNama = [];
+                    if (data) {
+                        Object.keys(data).forEach(key => {
+                            const item = data[key];
+                            item.id = key; 
+                            dataNama.push(item);
+                        });
+                    }
+                    renderTable();
+                }, (error) => {
+                    addLog("FIREBASE REJECTED: " + error.message + " (Cek Firebase Rules Anda!)", true);
                 });
             }
-            renderTable();
-        });
+        } catch (e) {
+            addLog("TRY-CATCH ERROR: " + e.message, true);
+        }
 
         // FUNGSI TAMBAH NAMA
         function tambahNama() {
+            addLog("Tombol Simpan Ditekan!");
             const panggilan = document.getElementById('inputPanggilan').value;
             const nama = document.getElementById('inputNama').value.trim();
             const alamat = document.getElementById('inputAlamat').value.trim();
 
             if (nama === '') {
                 tampilkanAlert('Nama tidak boleh kosong!', 'danger');
+                return;
+            }
+
+            if (!db) {
+                addLog("Gagal simpan: Database tidak terhubung.", true);
                 return;
             }
 
@@ -179,9 +207,10 @@
                 document.getElementById('inputNama').value = '';
                 document.getElementById('inputAlamat').value = '';
                 tampilkanAlert('Nama berhasil ditambahkan!', 'success');
+                addLog("Data berhasil disimpan ke Cloud.");
             }).catch((error) => {
-                console.error("Error simpan:", error);
-                tampilkanAlert('Gagal menyimpan! Cek Firebase Rules Anda.', 'danger');
+                addLog("Gagal simpan ke Firebase: " + error.message, true);
+                tampilkanAlert('Gagal menyimpan! Cek layar log error.', 'danger');
             });
         }
 
@@ -283,6 +312,7 @@
 
         // FUNGSI PRINT
         function prepareAndPrint() {
+            addLog("Tombol Cetak Ditekan!");
             if (dataNama.length === 0) { 
                 tampilkanAlert('Tidak ada nama untuk dicetak!', 'danger'); 
                 return; 
@@ -308,6 +338,7 @@
                 });
                 printArea.appendChild(printGrid);
             }
+            addLog("Membuka dialog print...");
             setTimeout(() => { window.print(); }, 500);
         }
 
