@@ -142,180 +142,212 @@ const firebaseConfig = {
   messagingSenderId: "14788781852",
   appId: "1:14788781852:web:722ff23fb5096e826cfcd9"
 };
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-        };
 
-        // Inisialisasi Firebase
+    };
+
+    // Inisialisasi Firebase
+    try {
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        let dataNama = []; // Array lokal untuk menampung data dari Firebase
+    } catch (e) {
+        console.error("Firebase Init Error:", e);
+    }
+    
+    const db = firebase.database();
+    let dataNama = []; 
 
-        // LISTEN REAL-TIME: Otomatis update jika ada data berubah dari HP/Laptop lain
-        db.ref('tamu').on('value', (snapshot) => {
-            const data = snapshot.val();
-            dataNama = [];
-            if (data) {
-                // Ubah object Firebase menjadi Array
-                Object.keys(data).forEach(key => {
-                    const item = data[key];
-                    item.id = key; // Simpan key Firebase untuk keperluan hapus
-                    dataNama.push(item);
-                });
-            }
-            renderTable();
-        });
+    // CEK KONEKSI KE DATABASE
+    db.ref('.info/connected').on('value', (snap) => {
+        const statusEl = document.getElementById('sync-status');
+        if (snap.val() === true) {
+            statusEl.textContent = "Status: Terhubung (Online)";
+            statusEl.className = "synced";
+        } else {
+            statusEl.textContent = "Status: Tidak Terhubung (Offline/Error Config)";
+            statusEl.className = "syncing";
+        }
+    });
 
-        // FUNGSI TAMBAH NAMA
-        function tambahNama() {
-            const panggilan = document.getElementById('inputPanggilan').value;
-            const nama = document.getElementById('inputNama').value.trim();
-            const alamat = document.getElementById('inputAlamat').value.trim();
-
-            if (nama === '') {
-                tampilkanAlert('Nama tidak boleh kosong!', 'danger');
-                return;
-            }
-
-            // Push langsung ke Firebase
-            db.ref('tamu').push({
-                panggilan: panggilan,
-                nama: nama,
-                alamat: alamat
+    // LISTEN REAL-TIME
+    db.ref('tamu').on('value', (snapshot) => {
+        const data = snapshot.val();
+        dataNama = [];
+        if (data) {
+            Object.keys(data).forEach(key => {
+                const item = data[key];
+                item.id = key; 
+                dataNama.push(item);
             });
+        }
+        renderTable();
+    }, (error) => {
+        console.error("Firebase Read Error:", error);
+        tampilkanAlert('Gagal membaca data! Cek Firebase Rules Anda.', 'danger');
+    });
 
+    // FUNGSI TAMBAH NAMA (DENGAN ERROR HANDLING)
+    function tambahNama() {
+        const panggilan = document.getElementById('inputPanggilan').value;
+        const nama = document.getElementById('inputNama').value.trim();
+        const alamat = document.getElementById('inputAlamat').value.trim();
+
+        if (nama === '') {
+            tampilkanAlert('Nama tidak boleh kosong!', 'danger');
+            return;
+        }
+
+        // Push ke Firebase
+        db.ref('tamu').push({
+            panggilan: panggilan,
+            nama: nama,
+            alamat: alamat
+        }).then(() => {
+            // Jika berhasil
             document.getElementById('inputNama').value = '';
             document.getElementById('inputAlamat').value = '';
             tampilkanAlert('Nama berhasil ditambahkan!', 'success');
-        }
-
-        // FUNGSI HAPUS 1 NAMA (Berdasarkan ID Firebase)
-        function hapusNama(id) {
-            if(confirm('Hapus nama ini?')) {
-                db.ref('tamu/' + id).remove();
-            }
-        }
-
-        // FUNGSI HAPUS SEMUA DATA
-        function hapusSemua() {
-            if (confirm('Apakah Anda yakin ingin menghapus SEMUA data nama?')) {
-                db.ref('tamu').remove();
-            }
-        }
-
-        // FUNGSI RENDER TABEL
-        function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            const emptyState = document.getElementById('emptyState');
-            tbody.innerHTML = '';
-
-            if (dataNama.length === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-                dataNama.forEach((item, index) => {
-                    const tr = document.createElement('tr');
-                    let badgeClass = 'badge-sdr';
-                    if (item.panggilan === 'Bapak') badgeClass = 'badge-bapak';
-                    if (item.panggilan === 'Ibu') badgeClass = 'badge-ibu';
-                    const tampilAlamat = item.alamat ? item.alamat : '-';
-
-                    tr.innerHTML = `
-                        <td>${index + 1}</td>
-                        <td><span class="badge ${badgeClass}">${item.panggilan}</span></td>
-                        <td style="text-transform: capitalize;">${item.nama}</td>
-                        <td class="col-alamat">${tampilAlamat}</td>
-                        <td><button class="btn-delete" onclick="hapusNama('${item.id}')" title="Hapus">✖</button></td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            }
-            document.getElementById('totalNama').innerText = dataNama.length;
-            document.getElementById('totalLembar').innerText = Math.ceil(dataNama.length / 10);
-        }
-
-        function tampilkanAlert(pesan, tipe) {
-            const alertBox = document.getElementById('alertBox');
-            alertBox.innerText = pesan;
-            alertBox.className = `alert alert-${tipe}`;
-            alertBox.style.display = 'block';
-            setTimeout(() => { alertBox.style.display = 'none'; }, 3000);
-        }
-
-        // FUNGSI IMPORT EXCEL
-        function importExcel(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-                let jumlahBaru = 0;
-                jsonData.forEach(row => {
-                    if (row[1] && typeof row[1] === 'string' && row[1].toLowerCase() !== 'nama') {
-                        let panggilan = row[0] ? row[0].toString() : 'Bapak';
-                        if (panggilan.toLowerCase().includes('ibu')) panggilan = 'Ibu';
-                        else if (panggilan.toLowerCase().includes('sdr')) panggilan = 'Sdr/i';
-                        else panggilan = 'Bapak';
-                        const nama = row[1].toString().trim();
-                        const alamat = row[2] ? row[2].toString().trim() : '';
-                        if (nama !== '') {
-                            db.ref('tamu').push({ panggilan: panggilan, nama: nama, alamat: alamat });
-                            jumlahBaru++;
-                        }
-                    }
-                });
-                tampilkanAlert(`Berhasil import ${jumlahBaru} nama baru!`, 'success');
-                event.target.value = '';
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        function exportExcel() {
-            if (dataNama.length === 0) { tampilkanAlert('Tidak ada data untuk di-export!', 'danger'); return; }
-            const dataToExport = dataNama.map((item, index) => ({ 'No': index + 1, 'Panggilan': item.panggilan, 'Nama': item.nama, 'Alamat': item.alamat }));
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Nama Undangan");
-            worksheet['!cols'] = [{ wch: 5 }, { wch: 10 }, { wch: 30 }, { wch: 40 }];
-            XLSX.writeFile(workbook, "Daftar_Nama_Undangan.xlsx");
-            tampilkanAlert('File Excel berhasil di-download!', 'success');
-        }
-
-        // FUNGSI PRINT
-        function prepareAndPrint() {
-            if (dataNama.length === 0) { tampilkanAlert('Tidak ada nama untuk dicetak!', 'danger'); return; }
-            const printArea = document.getElementById('printArea');
-            printArea.innerHTML = '';
-            const itemsPerPage = 10;
-            for (let i = 0; i < dataNama.length; i += itemsPerPage) {
-                const chunk = dataNama.slice(i, i + itemsPerPage);
-                const printGrid = document.createElement('div');
-                printGrid.className = 'print-grid';
-                chunk.forEach(item => {
-                    const box = document.createElement('div');
-                    box.className = 'name-box';
-                    const teksAlamat = item.alamat ? `di ${item.alamat}` : '';
-                    box.innerHTML = `
-                        <div class="kepada">Kepada Yth :</div>
-                        <div class="panggilan">${item.panggilan}</div>
-                        <div class="nama-undangan">${item.nama}</div>
-                        <div class="alamat-undangan">${teksAlamat}</div>
-                    `;
-                    printGrid.appendChild(box);
-                });
-                printArea.appendChild(printGrid);
-            }
-            setTimeout(() => { window.print(); }, 500);
-        }
-
-        document.getElementById("inputAlamat").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") { event.preventDefault(); tambahNama(); }
+        }).catch((error) => {
+            // Jika gagal (misal Rules menolak)
+            console.error("Firebase Write Error:", error);
+            tampilkanAlert('Gagal menyimpan! Cek Firebase Rules atau Config Anda.', 'danger');
         });
+    }
+
+    // FUNGSI HAPUS 1 NAMA
+    function hapusNama(id) {
+        if(confirm('Hapus nama ini?')) {
+            db.ref('tamu/' + id).remove()
+              .catch((error) => {
+                  tampilkanAlert('Gagal menghapus data!', 'danger');
+              });
+        }
+    }
+
+    // FUNGSI HAPUS SEMUA DATA
+    function hapusSemua() {
+        if (confirm('Apakah Anda yakin ingin menghapus SEMUA data nama?')) {
+            db.ref('tamu').remove()
+              .catch((error) => {
+                  tampilkanAlert('Gagal menghapus data!', 'danger');
+              });
+        }
+    }
+
+    // FUNGSI RENDER TABEL
+    function renderTable() {
+        const tbody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        tbody.innerHTML = '';
+
+        if (dataNama.length === 0) {
+            emptyState.style.display = 'block';
+        } else {
+            emptyState.style.display = 'none';
+            dataNama.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                let badgeClass = 'badge-sdr';
+                if (item.panggilan === 'Bapak') badgeClass = 'badge-bapak';
+                if (item.panggilan === 'Ibu') badgeClass = 'badge-ibu';
+                const tampilAlamat = item.alamat ? item.alamat : '-';
+
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><span class="badge ${badgeClass}">${item.panggilan}</span></td>
+                    <td style="text-transform: capitalize;">${item.nama}</td>
+                    <td class="col-alamat">${tampilAlamat}</td>
+                    <td><button class="btn-delete" onclick="hapusNama('${item.id}')" title="Hapus">✖</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        document.getElementById('totalNama').innerText = dataNama.length;
+        document.getElementById('totalLembar').innerText = Math.ceil(dataNama.length / 10);
+    }
+
+    function tampilkanAlert(pesan, tipe) {
+        const alertBox = document.getElementById('alertBox');
+        alertBox.innerText = pesan;
+        alertBox.className = `alert alert-${tipe}`;
+        alertBox.style.display = 'block';
+        setTimeout(() => { alertBox.style.display = 'none'; }, 5000); // Durasi 5 detik agar bisa dibaca
+    }
+
+    // FUNGSI IMPORT EXCEL
+    function importExcel(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+            let jumlahBaru = 0;
+            jsonData.forEach(row => {
+                if (row[1] && typeof row[1] === 'string' && row[1].toLowerCase() !== 'nama') {
+                    let panggilan = row[0] ? row[0].toString() : 'Bapak';
+                    if (panggilan.toLowerCase().includes('ibu')) panggilan = 'Ibu';
+                    else if (panggilan.toLowerCase().includes('sdr')) panggilan = 'Sdr/i';
+                    else panggilan = 'Bapak';
+                    const nama = row[1].toString().trim();
+                    const alamat = row[2] ? row[2].toString().trim() : '';
+                    if (nama !== '') {
+                        db.ref('tamu').push({ panggilan: panggilan, nama: nama, alamat: alamat });
+                        jumlahBaru++;
+                    }
+                }
+            });
+            tampilkanAlert(`Berhasil import ${jumlahBaru} nama baru!`, 'success');
+            event.target.value = '';
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function exportExcel() {
+        if (dataNama.length === 0) { tampilkanAlert('Tidak ada data untuk di-export!', 'danger'); return; }
+        const dataToExport = dataNama.map((item, index) => ({ 'No': index + 1, 'Panggilan': item.panggilan, 'Nama': item.nama, 'Alamat': item.alamat }));
+        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Nama Undangan");
+        worksheet['!cols'] = [{ wch: 5 }, { wch: 10 }, { wch: 30 }, { wch: 40 }];
+        XLSX.writeFile(workbook, "Daftar_Nama_Undangan.xlsx");
+        tampilkanAlert('File Excel berhasil di-download!', 'success');
+    }
+
+    // FUNGSI PRINT
+    function prepareAndPrint() {
+        if (dataNama.length === 0) { 
+            tampilkanAlert('Tidak ada nama untuk dicetak!', 'danger'); 
+            return; 
+        }
+        const printArea = document.getElementById('printArea');
+        printArea.innerHTML = '';
+        const itemsPerPage = 10;
+        for (let i = 0; i < dataNama.length; i += itemsPerPage) {
+            const chunk = dataNama.slice(i, i + itemsPerPage);
+            const printGrid = document.createElement('div');
+            printGrid.className = 'print-grid';
+            chunk.forEach(item => {
+                const box = document.createElement('div');
+                box.className = 'name-box';
+                const teksAlamat = item.alamat ? `di ${item.alamat}` : '';
+                box.innerHTML = `
+                    <div class="kepada">Kepada Yth :</div>
+                    <div class="panggilan">${item.panggilan}</div>
+                    <div class="nama-undangan">${item.nama}</div>
+                    <div class="alamat-undangan">${teksAlamat}</div>
+                `;
+                printGrid.appendChild(box);
+            });
+            printArea.appendChild(printGrid);
+        }
+        setTimeout(() => { window.print(); }, 500);
+    }
+
+    document.getElementById("inputAlamat").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") { event.preventDefault(); tambahNama(); }
+    });
     </script>
 </body>
 </html>
