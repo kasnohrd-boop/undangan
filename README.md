@@ -142,12 +142,12 @@
         // KONFIGURASI FIREBASE (GANTI DENGAN KODE ASLI ANDA)
         // ==========================================
         const firebaseConfig = {
-  apiKey: "AIzaSyCzXeGmf12d_LYT3CVPFh6nSOBLqQ2N8b4",
-  authDomain: "cetak-undangan-c9405.firebaseapp.com",
-  projectId: "cetak-undangan-c9405",
-  storageBucket: "cetak-undangan-c9405.firebasestorage.app",
-  messagingSenderId: "14788781852",
-  appId: "1:14788781852:web:722ff23fb5096e826cfcd9"  
+  apiKey: "AIzaSyD5CACtHvSFw2ouyDp-ryK2D1F7yig3lJQ",
+  authDomain: "cetak-undangan-4f659.firebaseapp.com",
+  projectId: "cetak-undangan-4f659",
+  storageBucket: "cetak-undangan-4f659.firebasestorage.app",
+  messagingSenderId: "599828746287",
+  appId: "1:599828746287:web:bdad8e86dc3ba834fa76da"
         };
 
         let db;
