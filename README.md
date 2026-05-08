@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -192,43 +191,52 @@
         .name-box {
             width: 189px;
             height: 264.6px;
-            border: 1px dashed #ccc; 
-            padding: 30px 15px 15px 15px;
+            
+            /* GANTI: MENAMBAHKAN BINGKAI OVAL / ELIPS */
+            border: 3px double var(--primary); /* Garis ganda elegan */
+            border-radius: 50%; /* Membuat bentuk persegi menjadi oval/elips */
+            
+            /* Padding diperbesar agar teks tidak nabrak garis oval di pinggir */
+            padding: 45px 25px 35px 25px; 
+            
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center; /* Teks rata tengah vertikal */
             align-items: center;
             text-align: center;
             font-family: 'Times New Roman', serif;
             page-break-inside: avoid;
+            overflow: hidden;
         }
 
         .name-box .kepada {
-            font-size: 14px;
-            margin-bottom: 15px;
-            color: #333;
+            font-size: 16px; /* Diperbesar dari 14px */
+            font-weight: bold; /* Ditambahkan bold */
+            margin-bottom: 12px;
+            color: #000;
         }
 
         .name-box .panggilan {
-            font-size: 14px;
+            font-size: 20px; /* Diperbesar dari 14px */
             font-weight: bold;
-            margin-bottom: 5px;
-            color: #333;
+            margin-bottom: 6px;
+            color: #000;
         }
 
         .name-box .nama-undangan {
-            font-size: 18px;
+            font-size: 24px; /* Diperbesar dari 18px */
             font-weight: bold;
-            line-height: 1.3;
+            line-height: 1.2;
             color: #000;
             text-transform: capitalize;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            padding: 0 5px;
         }
 
         .name-box .alamat-undangan {
-            font-size: 12px;
-            color: #444;
-            line-height: 1.3;
+            font-size: 14px; /* Diperbesar dari 12px */
+            color: #000;
+            line-height: 1.4;
             width: 100%;
             word-wrap: break-word;
             text-align: center;
@@ -251,7 +259,9 @@
                 padding: 5mm; 
             }
             .name-box {
-                border: none !important; 
+                /* Pastikan garis oval tetap tercetak jelas berwarna hitam */
+                border: 3px double #000 !important; 
+                border-radius: 50% !important;
             }
             @page {
                 size: A4;
@@ -309,7 +319,7 @@
 
     <div class="header">
         <h1>👍 Aplikasi Cetak Label Undangan Pernikahan</h1>
-        <p style="color: #666; font-size: 14px;">Ukuran Label: 5cm x 7cm (Maks 18 nama per lembar A4/HVS)</p>
+        <p style="color: #666; font-size: 14px;">Ukuran Label: 5cm x 7cm (Maks 18 nama per lembar A4/HVS) | Bingkai Oval</p>
     </div>
 
     <div class="container">
@@ -365,7 +375,7 @@
             <hr style="border: 0; border-top: 1px solid var(--border); margin: 20px 0;">
             <div style="font-size: 12px; color: #888; background: #f9f9f9; padding: 10px; border-radius: 6px;">
                 <strong>Catatan Akses Multi-User:</strong><br>
-                Karena ini berbasis web lokal, untuk diisi banyak orang sekaligus seperti Google Form, unggah file HTML ini ke hosting gratis (Netlify/Vercel) lalu sebar linknya.
+                Karena ini berbasis web lokal, untuk diisi banyak orang sekaligus seperti Google Form, unggah file HTML ini ke hosting gratis (Netlify/Vercel/GitHub) lalu sebar linknya.
             </div>
         </div>
 
@@ -492,7 +502,6 @@
                     if (item.panggilan === 'Bapak') badgeClass = 'badge-bapak';
                     if (item.panggilan === 'Ibu') badgeClass = 'badge-ibu';
 
-                    // Handle backward compatibility jika ada data lama tanpa alamat
                     const tampilAlamat = item.alamat ? item.alamat : '-';
 
                     tr.innerHTML = `
@@ -538,17 +547,15 @@
 
                 let jumlahBaru = 0;
                 jsonData.forEach(row => {
-                    // Skip jika baris kosong atau baris header
                     if (row[1] && typeof row[1] === 'string' && row[1].toLowerCase() !== 'nama') {
                         let panggilan = row[0] ? row[0].toString() : 'Bapak';
                         
-                        // Normalisasi panggilan
                         if (panggilan.toLowerCase().includes('ibu')) panggilan = 'Ibu';
                         else if (panggilan.toLowerCase().includes('sdr')) panggilan = 'Sdr/i';
                         else panggilan = 'Bapak';
 
                         const nama = row[1].toString().trim();
-                        const alamat = row[2] ? row[2].toString().trim() : ''; // Kolom C untuk alamat
+                        const alamat = row[2] ? row[2].toString().trim() : '';
 
                         if (nama !== '') {
                             dataNama.push({ panggilan: panggilan, nama: nama, alamat: alamat });
@@ -583,7 +590,6 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Nama Undangan");
 
-            // Atur lebar kolom agar rapi saat dibuka di Excel
             worksheet['!cols'] = [
                 { wch: 5 },  // No
                 { wch: 10 }, // Panggilan
@@ -609,7 +615,6 @@
                 const box = document.createElement('div');
                 box.className = 'name-box';
                 
-                // Siapkan teks alamat, tambahkan "di" jika alamatnya ada
                 const teksAlamat = item.alamat ? `di ${item.alamat}` : '';
 
                 box.innerHTML = `
