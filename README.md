@@ -141,13 +141,15 @@
         // ==========================================
         // KONFIGURASI FIREBASE (GANTI DENGAN KODE ASLI ANDA)
         // ==========================================
-        const firebaseConfig = {
-  apiKey: "AIzaSyD5CACtHvSFw2ouyDp-ryK2D1F7yig3lJQ",
-  authDomain: "cetak-undangan-4f659.firebaseapp.com",
-  projectId: "cetak-undangan-4f659",
-  storageBucket: "cetak-undangan-4f659.firebasestorage.app",
-  messagingSenderId: "599828746287",
-  appId: "1:599828746287:web:bdad8e86dc3ba834fa76da"
+       const firebaseConfig = {
+  apiKey: "AIzaSyB1a2b3c4d5e6f",           // 
+  authDomain: "undangan.firebaseapp.com",  // 
+  databaseURL: "https://undangan-default-rtdb.firebaseio.com", //
+  projectId: "undangan",                   // 
+  storageBucket: "undangan.appspot.com",   // 
+  messagingSenderId: "123456789",          // 
+  appId: "1:123456789:web:abc123"          // 
+};
         };
 
         let db;
