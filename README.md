@@ -133,7 +133,6 @@
 import { initializeApp } from "firebase/app";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
-
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyCzXeGmf12d_LYT3CVPFh6nSOBLqQ2N8b4",
@@ -143,7 +142,6 @@ const firebaseConfig = {
   messagingSenderId: "14788781852",
   appId: "1:14788781852:web:722ff23fb5096e826cfcd9"
 };
-
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
         };
