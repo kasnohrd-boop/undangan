@@ -141,8 +141,6 @@ const firebaseConfig = {
   storageBucket: "cetak-undangan-c9405.firebasestorage.app",
   messagingSenderId: "14788781852",
   appId: "1:14788781852:web:722ff23fb5096e826cfcd9"
-};
-
     };
 
     // Inisialisasi Firebase
