@@ -181,26 +181,26 @@
 
         .print-grid {
             display: grid;
-            grid-template-columns: repeat(3, 189px); /* 3 kolom x 5cm */
-            grid-template-rows: repeat(3, 302px);    /* 3 baris x 8cm (8cm = 302px) */
+            grid-template-columns: repeat(2, 302px); /* 2 kolom x 8cm (302px) */
+            grid-template-rows: repeat(5, 189px);    /* 5 baris x 5cm (189px) */
             gap: 0px;
             justify-content: center;
             padding: 10mm 0;
-            page-break-after: always; /* Pindah halaman setelah grid ini penuh */
+            page-break-after: always;
         }
 
         .name-box {
-            width: 189px;  /* 5 cm */
-            height: 302px; /* 8 cm */
+            width: 302px;  /* 8 cm (Lebar / Landscape) */
+            height: 189px; /* 5 cm (Tinggi / Landscape) */
             
-            /* GANTI: BINGKAI PERSEGI PANJANG TIPIS */
             border: 1px solid #000; 
-            border-radius: 4px;     /* Sudut sedikit tumpul agar rapi */
+            border-radius: 4px;     
             
-            padding: 30px 15px; 
+            /* Padding kiri-kanan diperbesar agar teks alamat memanjang ke samping */
+            padding: 20px 30px; 
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Rata tengah vertikal */
+            justify-content: center; 
             align-items: center;
             text-align: center;
             font-family: 'Times New Roman', serif;
@@ -209,33 +209,34 @@
         }
 
         .name-box .kepada {
-            font-size: 16px; 
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #000;
-        }
-
-        .name-box .panggilan {
-            font-size: 24px; /* Diperbesar */
+            font-size: 14px; 
             font-weight: bold;
             margin-bottom: 8px;
             color: #000;
         }
 
+        .name-box .panggilan {
+            font-size: 22px; 
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #000;
+        }
+
         .name-box .nama-undangan {
-            font-size: 32px; /* Diperbesar Sekali */
+            font-size: 30px; /* Font nama sangat besar */
             font-weight: bold;
             line-height: 1.1;
             color: #000;
             text-transform: capitalize;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             padding: 0 5px;
         }
 
         .name-box .alamat-undangan {
-            font-size: 18px; /* Diperbesar */
+            font-size: 22px; /* Font alamat diperbesar */
+            font-weight: bold; /* Font alamat dipertebal */
             color: #000;
-            line-height: 1.4;
+            line-height: 1.3;
             width: 100%;
             word-wrap: break-word;
             text-align: center;
@@ -316,7 +317,7 @@
 
     <div class="header">
         <h1>👍 Aplikasi Cetak Label Undangan Pernikahan</h1>
-        <p style="color: #666; font-size: 14px;">Ukuran Label: 5cm x 8cm (Maks 9 nama per lembar A4/HVS)</p>
+        <p style="color: #666; font-size: 14px;">Ukuran Label: 8cm x 5cm (Landscape) | Maks 10 nama per lembar A4/HVS</p>
     </div>
 
     <div class="container">
@@ -509,9 +510,9 @@
                 });
             }
 
-            // Update Stats (Karena 1 halaman sekarang hanya muut 9 kotak)
+            // Update Stats (Karena 1 halaman sekarang muat 10 kotak landscape)
             document.getElementById('totalNama').innerText = dataNama.length;
-            document.getElementById('totalLembar').innerText = Math.ceil(dataNama.length / 9);
+            document.getElementById('totalLembar').innerText = Math.ceil(dataNama.length / 10);
         }
 
         // FUNGSI TAMPILKAN ALERT
@@ -603,11 +604,11 @@
             }
 
             const printArea = document.getElementById('printArea');
-            printArea.innerHTML = ''; // Bersihkan area cetak sebelumnya
+            printArea.innerHTML = ''; 
 
-            const itemsPerPage = 9; // 1 halaman A4 muat 9 kotak (3x3)
+            const itemsPerPage = 10; // 1 halaman A4 muat 10 kotak landscape (2x5)
             
-            // Membagi data menjadi potongan-potongan halaman (9 data per halaman)
+            // Membagi data menjadi potongan-potongan halaman (10 data per halaman)
             for (let i = 0; i < dataNama.length; i += itemsPerPage) {
                 const chunk = dataNama.slice(i, i + itemsPerPage);
                 
@@ -633,7 +634,6 @@
                 printArea.appendChild(printGrid);
             }
 
-            // Beri sedikit delay agar DOM selesai render sebelum print dialog muncul
             setTimeout(() => {
                 window.print();
             }, 500);
